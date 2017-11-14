@@ -27,18 +27,28 @@ import com.fasterxml.jackson.datatype.jdk7.Jdk7Module;
 import de.charite.compbio.jannovar.mendel.ModeOfInheritance;
 import de.charite.compbio.jannovar.reference.HG19RefDictBuilder;
 import org.monarchinitiative.exomiser.core.Exomiser;
-import org.monarchinitiative.exomiser.core.analysis.*;
+import org.monarchinitiative.exomiser.core.analysis.Analysis;
+import org.monarchinitiative.exomiser.core.analysis.AnalysisMode;
+import org.monarchinitiative.exomiser.core.analysis.AnalysisResults;
+import org.monarchinitiative.exomiser.core.analysis.Settings;
+import org.monarchinitiative.exomiser.core.analysis.SettingsParser;
 import org.monarchinitiative.exomiser.core.filters.FilterReport;
 import org.monarchinitiative.exomiser.core.model.Gene;
 import org.monarchinitiative.exomiser.core.model.GeneticInterval;
 import org.monarchinitiative.exomiser.core.model.VariantEvaluation;
 import org.monarchinitiative.exomiser.core.prioritisers.PriorityType;
 import org.monarchinitiative.exomiser.core.prioritisers.service.PriorityService;
-import org.monarchinitiative.exomiser.core.writers.*;
+import org.monarchinitiative.exomiser.core.writers.OutputFormat;
+import org.monarchinitiative.exomiser.core.writers.OutputSettings;
+import org.monarchinitiative.exomiser.core.writers.ResultsWriter;
+import org.monarchinitiative.exomiser.core.writers.ResultsWriterFactory;
+import org.monarchinitiative.exomiser.core.writers.ResultsWriterUtils;
+import org.monarchinitiative.exomiser.core.writers.VariantEffectCount;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.ExtendedModelMap;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -47,12 +57,20 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpSession;
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
+import java.util.UUID;
 
 /**
  *
@@ -82,6 +100,72 @@ public class SubmitJobController {
     @GetMapping(value = "submit")
     public String submit() {
         return "submit";
+    }
+
+    @PostMapping(value = "submit_vcf_n_phenotypes_only")
+    public String submit(
+            @RequestParam(value = "vcf") MultipartFile vcfFile,
+            @RequestParam(value = "phenotypes") List<String> phenotypes
+    ) {
+        return submit(
+                vcfFile,
+                new MultipartFile() {
+
+                    @Override
+                    public String getName() {
+                        return null;
+                    }
+
+                    @Override
+                    public String getOriginalFilename() {
+                        return null;
+                    }
+
+                    @Override
+                    public String getContentType() {
+                        return null;
+                    }
+
+                    @Override
+                    public boolean isEmpty() {
+                        return false;
+                    }
+
+                    @Override
+                    public long getSize() {
+                        return 0;
+                    }
+
+                    @Override
+                    public byte[] getBytes() throws IOException {
+                        return new byte[0];
+                    }
+
+                    @Override
+                    public InputStream getInputStream() throws IOException {
+                        return null;
+                    }
+
+                    @Override
+                    public void transferTo(File dest) throws IOException, IllegalStateException {
+
+                    }
+                },
+                "",
+                "",
+                phenotypes,
+                null,
+                null,
+                "1.0",
+                false,
+                false,
+                false,
+                "ANY",
+                Collections.EMPTY_LIST,
+                "HIPHIVE_PRIORITY",
+                null,
+                new ExtendedModelMap()
+        );
     }
 
     @PostMapping(value = "submit")
